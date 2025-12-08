@@ -15,6 +15,6 @@
 
 - `server-example.conf`：伺服器端設定  
 - `client-example.conf`：客戶端設定  
-- `gateway-notes.md`：VPN 流量轉送與上網  
-- `issues.md`：遇到的錯誤與解法  
+- `gateway-notes.md`：VPN 流量轉送與上網 還有當初測試的一些心得
+
 
