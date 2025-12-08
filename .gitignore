@@ -12,3 +12,9 @@ wireguard/*.key
 # Python cache
 __pycache__/
 *.pyc
+
+# Nextcloud real config (do NOT commit)
+nextcloud/config.php
+nextcloud/config/
+nextcloud/data/
+
