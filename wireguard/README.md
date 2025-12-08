@@ -11,10 +11,10 @@
 
 ---
 
-## 📁 內容規劃（之後會慢慢補上）
+## 📁 內容規劃
 
-- `server.md`：伺服器端設定  
-- `client-examples.md`：客戶端設定  
+- `server-example.conf`：伺服器端設定  
+- `client-example.conf`：客戶端設定  
 - `gateway-notes.md`：VPN 流量轉送與上網  
 - `issues.md`：遇到的錯誤與解法  
 
