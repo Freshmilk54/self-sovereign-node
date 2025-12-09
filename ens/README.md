@@ -12,29 +12,12 @@ dk45dola.eth
 對外瀏覽頁面（eth.limo）：
 https://dk45dola.eth.limo/
 
-
-此 gateway 會自動解析 ENS 記錄中的 `contenthash`，並展示對應的 IPFS CID 內容。
-
----
-
 ## 📦 功能摘要
 
 - 租用 ENS 網域  
 - 將 IPFS CID 綁定到 ENS（設定 contenthash）  
 - 確保所有人可以透過 eth.limo 查看  
-- 每次更新 CID，即可更新 ENS 上的 contenthash（可自動化）
 
----
-
-## 🔁 ENS 綁定 CID 的流程（已完成）
-
-1. 在 ENS App 中設定 contenthash  
-2. CID 格式需經過 `0xe3...` 編碼  
-3. 確認 ENS Resolver 正常  
-4. 使用 eth.limo / eth.link 驗證  
-5. 更新新的 CID 時，只需再次發送交易更新 contenthash
-
----
 
 ## 🛠 未來可加入的功能
 
