@@ -1,83 +1,64 @@
-# On-chain Sync System (Arbitrum Sepolia)
+# On-chain Sync System（VPN Snapshot Anchor）
 
-本資料夾紀錄 self-sovereign-node 中「定時上鏈快照」的完整流程。
+這個模組負責把節點的 WireGuard 流量狀態快照：
 
-此功能的目標是將節點的關鍵狀態（VPN、Nextcloud、IPFS、meta snapshot）生成加密摘要（SHA256），並作為交易 data 上鏈保存，用作：
+1. 從 `wg show <iface> dump` 抓出所有 peer 的統計
+2. 寫入本機 log（CSV + JSON）
+3. 對這次快照內容計算 `SHA256`
+4. 將 hash 當作交易 data，送到 Arbitrum Sepolia（測試網）
+5. 透過 systemd timer 定期執行
 
-- 節點狀態證明  
-- 日誌防篡改  
-- 去中心化審計紀錄  
-- 自我主權系統的 timestamp proof  
-
----
-
-## 🔍 快照資料來源（目前整合）
-
-### 1. WireGuard 設定快照  
-來自：
-wg show
-
-解析後寫入 CSV（包含 peer 狀態、傳輸 bytes、最新 handshake 等）
-
-### 2. 本地系統紀錄 CSV  
-此 CSV 會包含節點運行狀態與基本健康指標。
-
-### 3. IPFS / Nextcloud metadata（規劃中）
+目標是：為自我主權節點建立一條「可驗證的歷史軌跡」，  
+讓每次狀態快照都在鏈上留下一個不可竄改的指紋。
 
 ---
 
-## 🔐 摘要（Snapshot Hash）計算方式
+## 🔁 資料流
 
-使用 SHA256：
-sha256(snapshot.csv) → 得到 32 bytes hash
+簡化流程：
 
-此 hash 會作為交易的 `data` 欄位上鏈。
+1. `vpn_anchor.py`：
+   - 呼叫 `wg show wg0 dump`
+   - 整理成結構化資料：
+     - pubkey / endpoint / allowed_ips / rx_bytes / tx_bytes / latest_handshake
+   - 寫入：
+     - `/var/log/vpn/traffic.csv`（累積型 log）
+     - `/var/log/vpn/traffic-YYYYMMDD.json`（每日 JSON 行檔）
+   - 將本次快照 JSON 做 `SHA256`，寫入：
+     - `/var/log/vpn/last_hash.txt`
 
----
+2. 如果 `.env` 中 `ANCHOR_ENABLE=1`：
+   - 從 `.env` 載入 RPC / 私鑰 / 鏈 ID / 目標地址
+   - 組一筆 0 ETH 交易，`data` 欄位放入該 SHA256（32 bytes）
+   - 使用 `web3.py` 簽署並發送到 Arbitrum Sepolia
+   - 將 tx hash 寫入 `/var/log/vpn/last_tx.txt`
 
-## 🚀 上鏈流程：Arbitrum Sepolia（已完成）
-
-1. 準備私鑰（測試網）  
-2. RPC 設定 Arbitrum Sepolia  
-3. 使用 web3.py / ethers.js 發送交易  
-4. 將 snapshot hash 放入 transaction data  
-5. 交易成功後，紀錄 tx hash 作為外部證據鏈
-
----
-
-## 🕒 自動化流程
-
-目前已設定定時任務：
-
-- 呼叫 snapshot 腳本  
-- 計算 SHA256  
-- 發送交易上鏈  
-- 記錄本地 log  
-
-未來會改成：
-
-- systemd timer  
-- 可選擇不同鏈（Base、Arbitrum、Linea）
+3. systemd：
+   - `vpn-anchor.service`：負責「跑一次快照＋上鏈」
+   - `vpn-anchor.timer`：每 5 分鐘叫 service 跑一次
 
 ---
 
-## 📌 例子（以 pseudo code 表示）
+## 📁 檔案一覽
 
-```python
-from web3 import Web3
+- `vpn_anchor.py`  
+  主程式，邏輯包含：
+  - 讀取 WireGuard 介面狀態
+  - 寫入 CSV / JSON log
+  - 計算 SHA256、寫入 `last_hash.txt`
+  - 在啟用時將 hash 上鏈並寫入 `last_tx.txt`
 
-w3 = Web3(Web3.HTTPProvider("https://sepolia-rollup.arbitrum.io/rpc"))
+- `.env.example`  
+  範例設定檔，實際部署時應建立 `/opt/vpn-anchor/.env`，內容包括：
+  - `ANCHOR_ENABLE`
+  - `WEB3_RPC`
+  - `CHAIN_ID`
+  - `WALLET_PRIVATE_KEY`
+  - `ANCHOR_TO`
+  - `WG_IFACE`
 
-snapshot_hash = calc_sha256("snapshot.csv")
+- `systemd/vpn-anchor.service.example`  
+  供複製到 `/etc/systemd/system/vpn-anchor.service` 使用的 service 範例。
 
-tx = {
-    "to": "0x0000000000000000000000000000000000000000",
-    "data": snapshot_hash,
-    "gas": 50000,
-    "nonce": w3.eth.get_transaction_count(account),
-}
-
-signed = w3.eth.account.sign_transaction(tx, private_key)
-w3.eth.send_raw_transaction(signed.rawTransaction)
-
-
+- `systemd/vpn-anchor.timer.example`  
+  供複製到 `/etc/systemd/system/vpn-anchor.timer` 使用的 timer 範例。
