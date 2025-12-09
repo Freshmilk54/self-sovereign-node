@@ -1,0 +1,12 @@
+[Unit]
+Description=WireGuard traffic snapshot & on-chain anchor
+
+[Service]
+Type=oneshot
+WorkingDirectory=/opt/vpn-anchor
+ExecStart=/opt/vpn-anchor/venv/bin/python /opt/vpn-anchor/vpn_anchor.py
+User=root
+Group=root
+
+[Install]
+WantedBy=multi-user.target
