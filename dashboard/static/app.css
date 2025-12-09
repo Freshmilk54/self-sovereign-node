@@ -1,0 +1,11 @@
+.card { border-radius:16px }
+.k { color:#9a3b3b; font-weight:600 }       /* 標籤色 */
+.pill { display:inline-block; border:1px solid #eee; border-radius:999px; padding:0 8px; margin:0 4px 4px 0; background:#fafafa }
+.peer-list { max-height:220px; overflow:auto; padding-right:6px }
+.peer-item { padding:6px 0; border-bottom:1px dashed #e5e5e5 }
+.peer-item:last-child { border-bottom:0 }
+.peer-item.stale .k, .peer-item.stale code { color:#b55 }
+.login-list { list-style:none; padding-left:0; margin:0; max-height:240px; overflow:auto }
+.login-list li { padding:4px 0; border-bottom:1px dashed #eee }
+.login-list li:last-child { border-bottom:0 }
+code { white-space:nowrap; overflow:hidden; text-overflow:ellipsis; display:inline-block; max-width:100% }
